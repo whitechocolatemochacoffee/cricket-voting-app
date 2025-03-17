@@ -21,23 +21,90 @@
       padding: 20px;
       margin: 0;
     }
-    h1 { text-align: center; margin-bottom: 20px; }
-    .table-container { overflow-x: auto; }
-    table { border-collapse: collapse; width: 100%; min-width: 800px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; white-space: nowrap; }
-    th { background: var(--header-bg); color: var(--accent-color); position: sticky; top: 0; }
-    .fixed-col { position: sticky; left: 0; background: var(--card-bg); color: var(--accent-color); }
-    .fixed-col-end { position: sticky; right: 0; background: var(--card-bg); color: var(--accent-color); }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .header-bar h1 {
+      margin: 0;
+      padding: 10px;
+      background: var(--header-bg);
+      border-radius: 12px;
+      text-shadow: 2px 2px 5px #000;
+      color: var(--accent-color);
+      font-size: 1.5em;
+    }
+    .back-link {
+      color: var(--accent-color);
+      text-decoration: none;
+      background: var(--button-bg);
+      padding: 10px 15px;
+      border-radius: 8px;
+      transition: background 0.3s;
+      font-size: 1em;
+      margin-top: 10px;
+    }
+    .back-link:hover {
+      background: var(--button-hover);
+    }
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 600px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    th {
+      background: var(--header-bg);
+      color: var(--accent-color);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .fixed-col {
+      position: sticky;
+      left: 0;
+      background: var(--card-bg);
+      color: var(--accent-color);
+      z-index: 1;
+    }
+    .fixed-col-end {
+      position: sticky;
+      right: 0;
+      background: var(--card-bg);
+      color: var(--accent-color);
+      z-index: 1;
+    }
     .green { background-color: #4CAF50; }
     .red { background-color: #F44336; }
     .yellow { background-color: #FFC107; }
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      table { min-width: 400px; }
+      th, td { padding: 6px; font-size: 0.9em; }
+      .header-bar h1 { font-size: 1.2em; }
+      .back-link { font-size: 0.9em; padding: 8px 12px; }
+    }
   </style>
 </head>
 <body>
-  <h1>Scoreboard</h1>
+  <div class="header-bar">
+    <h1>Scoreboard</h1>
+    <a class="back-link" href="voting.html">← Back to Voting</a>
+  </div>
   <div class="table-container">
     <table id="scoreboardTable">
-      <!-- Dynamically populated -->
+      <!-- Table content populated dynamically -->
     </table>
   </div>
   <script>
@@ -46,9 +113,9 @@
       fetch('/voters').then(res => res.json()),
       fetch('/results').then(res => res.json())
     ]).then(([votersData, resultsData]) => {
-      // For simplicity, assume matches are those declared in results
+      // Assume the list of matches are those declared in results
       const matches = resultsData.results.map(r => ({ matchName: r.matchName }));
-      // Build header row: first col for name, then one col per match, then last col for current standing.
+      // Build header row: first col = Player Name, then one column per match, last col = Current Standing
       let header = `<tr><th class="fixed-col">Player Name</th>`;
       matches.forEach(m => { header += `<th>${m.matchName}</th>`; });
       header += `<th class="fixed-col-end">Current Standing</th></tr>`;
@@ -56,6 +123,7 @@
       votersData.votersPool.forEach(voter => {
         let row = `<tr><td class="fixed-col">${voter.name}</td>`;
         matches.forEach(m => {
+          // Get voter’s vote for match m
           const vote = voter.votingInfo.find(v => v.matchName === m.matchName);
           let cellContent = "";
           if (vote) {
@@ -63,7 +131,7 @@
             if (declared) {
               const teamColor = (vote.votedTeam === declared.winner) ? "green" : "red";
               cellContent += `<div class="${teamColor}">Team: ${vote.votedTeam}</div>`;
-              // For MOTM, compare each selection
+              // Compare each MOTM selection for each team
               const motmAColor = (vote.motm && vote.motm.teamA.some(sel => declared.declaredMotm.teamA.includes(sel) && sel !== "")) ? "green" : "red";
               const motmBColor = (vote.motm && vote.motm.teamB.some(sel => declared.declaredMotm.teamB.includes(sel) && sel !== "")) ? "green" : "red";
               cellContent += `<div class="${motmAColor}">MOTM ${Object.keys(declared.declaredMotm)[0]}: ${vote.motm ? vote.motm.teamA.join(", ") : "N/A"}</div>`;
